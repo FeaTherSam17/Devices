@@ -1,6 +1,10 @@
 package com.samafther.devices
 
-data class Devices()
+data class Device(
+    val id:Long,
+    val name:String,
+    val data: Spects?)
+
 /*
 * [
   {
