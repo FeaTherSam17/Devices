@@ -9,10 +9,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.samafther.devices.ui.theme.DevicesTheme
+import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,29 +28,29 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DevicesTheme {
+                var devices by remember { mutableStateOf(listOf<Device>()) }
+                getDevices { result ->
+                    devices = result
+                }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 //                    Greeting(
 //                        name = "Android",
 //                        modifier = Modifier.padding(innerPadding)
 //                    )
-                    MainView(Modifier.padding(innerPadding),listOf(
-                        Device(0, "iPhone 17", Spects(color = "Lavender", capacity = "256 GB")),
-                        Device(1, "Google Pixel 6 Pro", Spects(color = "Cloudy White", capacity = "128 GB")),
-                        Device(2, "Apple iPhone 12 Mini", Spects("Blue","256GB")),
-                        Device(3, "Apple iPhone 12 Pro Max", Spects(color = "Cloudy White", capacity = "512 GB")),
-                        Device(4, "Apple iPhone 11, 64GB", Spects(color = "Purple",null)),
-                        Device(5, "Samsung Galaxy Z Fold2", Spects(color = "Brown",null)),
-                        Device(6, "Apple AirPods", Spects(null,null)),
-                        Device(7, "Apple MacBook Pro 16", Spects(null,capacity = "1 TB")),
-                        Device(8, "Apple Watch Series 8", Spects(color = "Elderberry", capacity = "41mm")),
-                        Device(9, "Beats Studio3 Wireless", Spects(color = "Red",null)),
-                        Device(10, "Apple iPad Mini 5th Gen", Spects(null,capacity = "64 GB")),
-                        Device(11, "Apple iPad Mini 5th Gen", Spects(null,capacity = "254 GB")),
-                        Device(12, "Apple iPad Air", Spects(null,capacity = "64 GB")),
-                        Device(13, "Apple iPad Air", Spects(null,capacity = "256 GB"))
-                    ))
+                    MainView(Modifier.padding(innerPadding),
+                        devices = devices)
                 }
             }
+        }
+    }
+    private fun getDevices(onResult:(List<Device>)-> Unit){
+        val retrofit = Retrofit.Builder()
+            .baseUrl(Constants.BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val service = retrofit.create(DeviceService::class.java)
+        lifecycleScope.launch {
+            val devices = service.getAllDevices()
         }
     }
 }
